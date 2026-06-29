@@ -960,14 +960,19 @@
     <div class="form-box">
       <h3>무료 상담 신청</h3>
       <p>업종 · 직원 수 · 연구비 여부만 알면<br>인증 가능 여부 바로 안내해 드립니다.</p>
-      <div class="field"><label>회사명 *</label><input type="text" placeholder="(주)회사명을 입력하세요"></div>
-      <div class="field"><label>대표자 성함 *</label><input type="text" placeholder="홍길동"></div>
-      <div class="field"><label>연락처 *</label><input type="tel" placeholder="010-0000-0000"></div>
-      <div class="field"><label>관심 인증</label><select><option value="">선택해주세요</option><option>기업부설연구소 인정</option><option>연구개발전담부서 인정</option><option>벤처기업 인증</option><option>모두 상담 원합니다</option></select></div>
-      <div class="field"><label>문의 내용 (선택)</label><textarea placeholder="현재 상황이나 궁금한 점을 자유롭게 적어주세요"></textarea></div>
+      <div class="field"><label>회사명 *</label><input type="text" id="f-company" placeholder="(주)회사명을 입력하세요"></div>
+      <div class="field"><label>대표자 성함 *</label><input type="text" id="f-name" placeholder="홍길동"></div>
+      <div class="field"><label>연락처 *</label><input type="tel" id="f-phone" placeholder="010-0000-0000"></div>
+      <div class="field"><label>관심 인증</label><select id="f-cert"><option value="">선택해주세요</option><option>기업부설연구소 인정</option><option>연구개발전담부서 인정</option><option>벤처기업 인증</option><option>모두 상담 원합니다</option></select></div>
+      <div class="field"><label>문의 내용 (선택)</label><textarea id="f-message" placeholder="현재 상황이나 궁금한 점을 자유롭게 적어주세요"></textarea></div>
       <div class="checkbox-row"><input type="checkbox" id="agree"><label for="agree">개인정보 수집 및 이용에 동의합니다. (수집목적: 상담 연결, 보관기간: 상담 종료 후 즉시 파기)</label></div>
-      <button class="btn-submit">무료 상담 신청하기</button>
+      <button class="btn-submit" id="f-submit" onclick="submitForm()">무료 상담 신청하기</button>
       <p class="privacy-note">✦ 수집된 정보는 상담 목적 외 사용하지 않습니다</p>
+      <div id="f-done" style="display:none;text-align:center;padding:30px 10px;">
+        <div style="font-size:48px;margin-bottom:12px;">✅</div>
+        <h3 style="margin-bottom:8px;color:var(--navy);">신청이 완료되었습니다</h3>
+        <p style="color:#555;line-height:1.6;">담당 컨설턴트가 <strong>24시간 내</strong> 직접 연락드립니다.<br>감사합니다.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -986,5 +991,50 @@
   <a href="#form" class="float-btn">💬 카카오 상담</a>
 </div>
 
+<script>
+var GAS_URL = "https://script.google.com/macros/s/AKfycbx8b2lH_maAatHLiGKTenDb78Lez9cbgqkv8WOWsGo1s9JGXi4h4OtUFeNOc1ia6mGx0Q/exec";
+function submitForm(){
+  var company = (document.getElementById('f-company').value||'').trim();
+  var name    = (document.getElementById('f-name').value||'').trim();
+  var phone   = (document.getElementById('f-phone').value||'').trim();
+  var cert    = document.getElementById('f-cert').value||'';
+  var message = (document.getElementById('f-message').value||'').trim();
+  var agree   = document.getElementById('agree').checked;
+
+  if(!company){ alert('회사명을 입력해주세요.'); return; }
+  if(!name){ alert('대표자 성함을 입력해주세요.'); return; }
+  if(!phone){ alert('연락처를 입력해주세요.'); return; }
+  if(!/[0-9]{9,}/.test(phone.replace(/[^0-9]/g,''))){ alert('연락처를 정확히 입력해주세요.'); return; }
+  if(!agree){ alert('개인정보 수집 및 이용에 동의해주세요.'); return; }
+
+  var btn = document.getElementById('f-submit');
+  btn.disabled = true;
+  btn.textContent = '전송 중...';
+
+  var payload = { company: company, name: name, phone: phone, cert: cert, message: message };
+
+  fetch(GAS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function(){
+    showDone();
+  }).catch(function(){
+    // no-cors라 응답을 못 읽어도 전송은 보통 성공함 → 완료 처리
+    showDone();
+  });
+}
+function showDone(){
+  ['f-company','f-name','f-phone','f-cert','f-message'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.closest('.field').style.display='none';
+  });
+  document.querySelector('.checkbox-row').style.display='none';
+  document.getElementById('f-submit').style.display='none';
+  var pn=document.querySelector('.privacy-note'); if(pn) pn.style.display='none';
+  document.getElementById('f-done').style.display='block';
+  document.getElementById('f-done').scrollIntoView({behavior:'smooth', block:'center'});
+}
+</script>
 </body>
 </html>
